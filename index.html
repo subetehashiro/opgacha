@@ -54,7 +54,7 @@
         }
         .summary-stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
             gap: 6px;
             font-size: 13px;
         }
@@ -194,8 +194,8 @@
         .slot-info {
             display: flex;
             flex-direction: column;
-            gap: 3px;
-            overflow: hidden;
+            gap: 4px;
+            width: 100%;
         }
         .slot-main {
             display: flex;
@@ -204,8 +204,9 @@
             flex-wrap: wrap;
         }
         .slot-prob {
-            font-size: 11px;
-            color: #888;
+            font-size: 12px;
+            color: #ffcc00; /* 見やすいように少し目立つ色に補正 */
+            word-break: break-all;
         }
         .lock-label {
             font-size: 12px;
@@ -243,6 +244,7 @@
             font-style: italic;
         }
 
+        /* スマホ向け微調整 */
         @media (max-width: 480px) {
             body {
                 padding: 10px;
@@ -254,11 +256,8 @@
                 width: 100%;
             }
             .slot {
-                flex-direction: column;
+                flex-direction: row;
                 align-items: flex-start;
-            }
-            .lock-label {
-                align-self: flex-end;
             }
         }
     </style>
@@ -491,7 +490,7 @@
                 if (data.slots[i] !== null && !data.locks[i]) {
                     let chosenLvlObj = getRandomWeighted(LEVEL_WEIGHTS, item => item.w);
                     data.slots[i].level = chosenLvlObj.lvl;
-                    data.slots[i].lastAction = 'number'; // 数値再設定による更新フラグ
+                    data.slots[i].lastAction = 'number';
                 }
             }
             renderDisplay();
@@ -579,11 +578,9 @@
                     let probText = "";
 
                     if (s.lastAction === 'number') {
-                        // 数値再設定時はレベルの確率を表示
                         let lvlProb = getLevelProbability(s.level);
                         probText = `数値抽選確率: ${lvlProb} (Lv.${s.level})`;
                     } else {
-                        // 効果変更時はオプション選択確率を表示
                         let currentProb = calculateCurrentProbability(s.name, tempExisting.filter(n => n !== s.name));
                         probText = `獲得時抽選確率（変動後）: ${currentProb}`;
                     }
