@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>オバロOPガチャ</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #1a1a1d;
+            color: #ffffff;
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 22px;
+            border-bottom: 2px solid #ffcc00;
+            padding-bottom: 10px;
+            color: #ffcc00;
+            text-align: left;
+        }
+        /* 全部位合計サマリーエリア */
+        .summary-panel {
+            background-color: #222225;
+            border: 2px solid #ffcc00;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .summary-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #444;
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .total-modules-badge {
+            font-size: 18px;
+            color: #ffffff;
+        }
+        .total-modules-badge strong {
+            color: #ffcc00;
+            font-size: 22px;
+        }
+        .summary-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 8px;
+            font-size: 13px;
+        }
+        .stat-item {
+            background-color: #111;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            border-left: 3px solid #ffcc00;
+        }
+        .stat-item-val {
+            font-weight: bold;
+            color: #3b82f6;
+        }
+        .no-stats {
+            color: #666;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        /* 部位タブ */
+        .parts-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 0;
+        }
+        .part-tab {
+            flex: 1;
+            padding: 10px;
+            background-color: #2d2d30;
+            border: 1px solid #444;
+            color: #aaa;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.2s;
+        }
+        .part-tab.active {
+            background-color: #ffcc00;
+            color: #000;
+            border-color: #ffcc00;
+        }
+        .panel {
+            background-color: #2d2d30;
+            padding: 20px;
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 20px;
+            text-align: left;
+            border: 1px solid #444;
+            border-top: none;
+        }
+        .stats {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #bbb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            font-weight: bold;
+            cursor: pointer;
+            padding: 12px;
+            font-size: 15px;
+            border: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+            flex: 1;
+            min-width: 110px;
+        }
+        .btn-reroll {
+            background-color: #ffcc00;
+            color: #000;
+        }
+        .btn-reroll:hover {
+            background-color: #e6b800;
+        }
+        .btn-reset-num {
+            background-color: #3b82f6;
+            color: #fff;
+        }
+        .btn-reset-num:hover {
+            background-color: #2563eb;
+        }
+        .btn-reset-num:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .btn-undo {
+            background-color: #a855f7;
+            color: #fff;
+        }
+        .btn-undo:hover {
+            background-color: #9333ea;
+        }
+        .btn-undo:disabled {
+            background-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .btn-reset-all {
+            background-color: #ef4444;
+            color: #fff;
+            flex: 0 0 auto;
+            min-width: 90px;
+        }
+        .btn-reset-all:hover {
+            background-color: #dc2626;
+        }
+        .slot-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .slot {
+            background-color: #111;
+            border: 1px solid #444;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+        }
+        .slot-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .slot-main {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .slot-prob {
+            font-size: 12px;
+            color: #888;
+        }
+        .lock-label {
+            font-size: 13px;
+            cursor: pointer;
+            background: #333;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #555;
+        }
+        .lock-label input {
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        
+        /* 段階別スタイル演出 */
+        .lvl-normal {
+            color: #ffffff;
+        }
+        .lvl-high {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+        .lvl-max {
+            background-color: #000000;
+            color: #ffffff;
+            font-weight: bold;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #3b82f6;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+        }
+        .empty-slot {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>オバロOPガチャ</h1>
+
+    <!-- 全部位合計サマリーパネル -->
+    <div class="summary-panel">
+        <div class="summary-title">
+            <span>📊 合計オプション</span>
+            <span class="total-modules-badge">全部位カスモ消費: <strong id="grandTotalModules">0</strong> 個</span>
+        </div>
+        <div class="summary-stats-grid" id="summaryStatsGrid">
+            <span class="no-stats">まだ効果を獲得していません</span>
+        </div>
+    </div>
+
+    <!-- 部位選択タブ -->
+    <div class="parts-tabs">
+        <div class="part-tab active" id="tab-head" onclick="switchPart('head')">頭</div>
+        <div class="part-tab" id="tab-arm" onclick="switchPart('arm')">腕</div>
+        <div class="part-tab" id="tab-chest" onclick="switchPart('chest')">胴</div>
+        <div class="part-tab" id="tab-leg" onclick="switchPart('leg')">足</div>
+    </div>
+
+    <div class="panel">
+        <div class="stats">
+            <div>
+                <span id="currentPartTitle" style="color: #ffcc00; font-weight: bold; font-size: 18px;">【頭】</span> 
+                部位消費: <strong id="totalModules" style="color: #ffcc00; font-size: 20px;">0</strong> 個<br>
+                <span id="currentCostInfo" style="font-size: 13px; color: #888;">（必要カスモ: 0個ロック時=1個）</span>
+            </div>
+            <button class="btn-reset-all" onclick="resetCurrentPart()">部位リセット</button>
+        </div>
+        <div class="button-group">
+            <button class="btn-reroll" onclick="rollGacha()">効果変更</button>
+            <button class="btn-reset-num" id="btnResetNum" onclick="resetNumbers()" disabled>数値再設定</button>
+            <button class="btn-undo" id="btnUndo" onclick="undo()" disabled>一つ戻る</button>
+        </div>
+    </div>
+
+    <div class="slot-container" id="slotsDisplay">
+        <!-- スロット描画エリア -->
+    </div>
+
+    <script>
+        const OPTION_WEIGHTS = {
+            "攻撃力増加": 10,
+            "有利コードダメージ増加": 10,
+            "最大装弾数増加": 12,
+            "クリティカルダメージ増加": 10,
+            "防御力増加": 10,
+            "命中率増加": 12,
+            "チャージダメージ増加": 12,
+            "チャージ速度増加": 12,
+            "クリティカル確率増加": 12
+        };
+
+        const LEVEL_WEIGHTS = [
+            { lvl: 1, w: 12 }, { lvl: 2, w: 12 }, { lvl: 3, w: 12 }, { lvl: 4, w: 12 }, { lvl: 5, w: 12 },
+            { lvl: 6, w: 7 },  { lvl: 7, w: 7 },  { lvl: 8, w: 7 },  { lvl: 9, w: 7 },  { lvl: 10, w: 7 },
+            { lvl: 11, w: 1 }, { lvl: 12, w: 1 }, { lvl: 13, w: 1 }, { lvl: 14, w: 1 }, { lvl: 15, w: 1 }
+        ];
+
+        const STAT_NUM_VALUES = {
+            "クリティカルダメージ増加": [6.64, 7.62, 8.60, 9.58, 10.56, 11.54, 12.52, 13.50, 14.98, 15.46, 16.44, 17.42, 18.40, 19.38, 20.36],
+            "クリティカル確率増加": [2.30, 2.64, 2.98, 3.32, 3.66, 4.00, 4.35, 4.69, 5.03, 5.37, 5.71, 6.05, 6.39, 6.73, 7.07],
+            "有利コードダメージ増加": [9.54, 10.94, 12.34, 13.75, 15.15, 16.55, 17.95, 19.35, 20.75, 22.15, 23.56, 24.96, 26.36, 27.76, 29.16],
+            "命中率増加": [4.77, 5.47, 6.18, 6.88, 7.59, 8.29, 9.00, 9.70, 10.40, 11.11, 11.81, 12.52, 13.22, 13.93, 14.63],
+            "攻撃力増加": [4.77, 5.47, 6.18, 6.88, 7.59, 8.29, 9.00, 9.70, 10.40, 11.11, 11.81, 12.52, 13.22, 13.93, 14.63],
+            "最大装弾数増加": [27.84, 31.95, 36.06, 40.17, 44.28, 48.39, 52.50, 56.60, 60.71, 64.82, 68.93, 73.04, 77.15, 81.26, 85.37],
+            "チャージダメージ増加": [4.77, 5.47, 6.18, 6.88, 7.59, 8.29, 9.00, 9.70, 10.40, 11.11, 11.81, 12.52, 13.22, 13.93, 14.63],
+            "防御力増加": [4.77, 5.47, 6.18, 6.88, 7.59, 8.29, 9.00, 9.70, 10.40, 11.11, 11.81, 12.52, 13.22, 13.93, 14.63],
+            "チャージ速度増加": [1.98, 2.28, 2.57, 2.86, 3.16, 3.45, 3.75, 4.04, 4.33, 4.63, 4.92, 5.21, 5.51, 5.80, 6.09]
+        };
+
+        const STAT_VALUES = {
+            "クリティカルダメージ増加": ["6.64%", "7.62%", "8.60%", "9.58%", "10.56%", "11.54%", "12.52%", "13.50%", "14.98%", "15.46%", "16.44%", "17.42%", "18.40%", "19.38%", "20.36%"],
+            "クリティカル確率増加": ["2.30%", "2.64%", "2.98%", "3.32%", "3.66%", "4.00%", "4.35%", "4.69%", "5.03%", "5.37%", "5.71%", "6.05%", "6.39%", "6.73%", "7.07%"],
+            "有利コードダメージ増加": ["9.54%", "10.94%", "12.34%", "13.75%", "15.15%", "16.55%", "17.95%", "19.35%", "20.75%", "22.15%", "23.56%", "24.96%", "26.36%", "27.76%", "29.16%"],
+            "命中率増加": ["4.77%", "5.47%", "6.18%", "6.88%", "7.59%", "8.29%", "9.00%", "9.70%", "10.40%", "11.11%", "11.81%", "12.52%", "13.22%", "13.93%", "14.63%"],
+            "攻撃力増加": ["4.77%", "5.47%", "6.18%", "6.88%", "7.59%", "8.29%", "9.00%", "9.70%", "10.40%", "11.11%", "11.81%", "12.52%", "13.22%", "13.93%", "14.63%"],
+            "最大装弾数増加": ["27.84%", "31.95%", "36.06%", "40.17%", "44.28%", "48.39%", "52.50%", "56.60%", "60.71%", "64.82%", "68.93%", "73.04%", "77.15%", "81.26%", "85.37%"],
+            "チャージダメージ増加": ["4.77%", "5.47%", "6.18%", "6.88%", "7.59%", "8.29%", "9.00%", "9.70%", "10.40%", "11.11%", "11.81%", "12.52%", "13.22%", "13.93%", "14.63%"],
+            "防御力増加": ["4.77%", "5.47%", "6.18%", "6.88%", "7.59%", "8.29%", "9.00%", "9.70%", "10.40%", "11.11%", "11.81%", "12.52%", "13.22%", "13.93%", "14.63%"],
+            "チャージ速度増加": ["1.98%", "2.28%", "2.57%", "2.86%", "3.16%", "3.45%", "3.75%", "4.04%", "4.33%", "4.63%", "4.92%", "5.21%", "5.51%", "5.80%", "6.09%"]
+        };
+
+        let partsData = {
+            head: { name: "頭", modules: 0, slots: [null, null, null], locks: [false, false, false] },
+            arm:  { name: "腕", modules: 0, slots: [null, null, null], locks: [false, false, false] },
+            chest:{ name: "胴", modules: 0, slots: [null, null, null], locks: [false, false, false] },
+            leg:  { name: "足", modules: 0, slots: [null, null, null], locks: [false, false, false] }
+        };
+
+        let currentPartKey = "head";
+        let historyStack = []; // 一つ戻る用の履歴スタック
+
+        function saveHistory() {
+            saveLocksFromDOM();
+            // ディープコピーして履歴に保存
+            historyStack.push(JSON.parse(JSON.stringify(partsData)));
+            // 履歴は最大30件まで保持
+            if (historyStack.length > 30) {
+                historyStack.shift();
+            }
+        }
+
+        function undo() {
+            if (historyStack.length > 0) {
+                partsData = historyStack.pop();
+                renderDisplay();
+            }
+        }
+
+        function switchPart(partKey) {
+            saveLocksFromDOM();
+            currentPartKey = partKey;
+
+            document.querySelectorAll(".part-tab").forEach(el => el.classList.remove("active"));
+            document.getElementById(`tab-${partKey}`).classList.add("active");
+            document.getElementById("currentPartTitle").innerText = `【${partsData[partKey].name}】`;
+
+            renderDisplay();
+        }
+
+        function saveLocksFromDOM() {
+            for (let i = 0; i < 3; i++) {
+                let cb = document.getElementById(`lock${i}`);
+                if (cb) {
+                    partsData[currentPartKey].locks[i] = cb.checked;
+                }
+            }
+        }
+
+        function getRandomWeighted(items, weightFn) {
+            let totalWeight = items.reduce((sum, item) => sum + weightFn(item), 0);
+            let random = Math.random() * totalWeight;
+            for (let item of items) {
+                if (random < weightFn(item)) return item;
+                random -= weightFn(item);
+            }
+            return items[items.length - 1];
+        }
+
+        function getLockCount() {
+            saveLocksFromDOM();
+            return partsData[currentPartKey].locks.filter((locked, i) => locked && partsData[currentPartKey].slots[i] !== null).length;
+        }
+
+        function getLockCost() {
+            return getLockCount() + 1;
+        }
+
+        function calculateCurrentProbability(targetName, existingNames) {
+            let totalWeight = Object.keys(OPTION_WEIGHTS)
+                .filter(name => !existingNames.includes(name))
+                .reduce((sum, name) => sum + OPTION_WEIGHTS[name], 0);
+            
+            if (totalWeight <= 0) return "0.00%";
+            let baseW = OPTION_WEIGHTS[targetName];
+            let prob = (baseW / totalWeight) * 100;
+            return prob.toFixed(2) + "%";
+        }
+
+        function rollStat(existingNames) {
+            let available = Object.keys(OPTION_WEIGHTS).filter(name => !existingNames.includes(name));
+            if (available.length === 0) return null;
+            let chosenName = getRandomWeighted(available, name => OPTION_WEIGHTS[name]);
+            let chosenLvlObj = getRandomWeighted(LEVEL_WEIGHTS, item => item.w);
+            return { name: chosenName, level: chosenLvlObj.lvl };
+        }
+
+        // 【効果変更】
+        function rollGacha() {
+            saveHistory(); // 履歴保存
+            let data = partsData[currentPartKey];
+            let cost = getLockCost();
+            data.modules += cost;
+
+            let existingNames = [];
+            for (let i = 0; i < 3; i++) {
+                if (data.slots[i] !== null && data.locks[i]) {
+                    existingNames.push(data.slots[i].name);
+                }
+            }
+
+            let newSlots = [null, null, null];
+            for (let i = 0; i < 3; i++) {
+                if (data.slots[i] !== null && data.locks[i]) {
+                    newSlots[i] = data.slots[i];
+                }
+            }
+
+            if (newSlots[0] === null) {
+                newSlots[0] = rollStat(existingNames);
+                if (newSlots[0]) existingNames.push(newSlots[0].name);
+            } else {
+                existingNames.push(newSlots[0].name);
+            }
+
+            if (newSlots[1] === null) {
+                if (Math.random() < 0.50) {
+                    newSlots[1] = rollStat(existingNames);
+                    if (newSlots[1]) existingNames.push(newSlots[1].name);
+                }
+            } else {
+                existingNames.push(newSlots[1].name);
+            }
+
+            if (newSlots[2] === null && newSlots[1] !== null) {
+                if (Math.random() < 0.30) {
+                    newSlots[2] = rollStat(existingNames);
+                }
+            }
+
+            data.slots = newSlots;
+            renderDisplay();
+        }
+
+        // 【数値再設定】
+        function resetNumbers() {
+            saveHistory(); // 履歴保存
+            let data = partsData[currentPartKey];
+            let cost = getLockCost();
+            data.modules += cost;
+
+            for (let i = 0; i < 3; i++) {
+                if (data.slots[i] !== null && !data.locks[i]) {
+                    let chosenLvlObj = getRandomWeighted(LEVEL_WEIGHTS, item => item.w);
+                    data.slots[i].level = chosenLvlObj.lvl;
+                }
+            }
+            renderDisplay();
+        }
+
+        // 【部位リセット】
+        function resetCurrentPart() {
+            if (confirm(`【${partsData[currentPartKey].name}】の厳選状況と消費カスモ数をリセットしますか？`)) {
+                saveHistory(); // 履歴保存
+                partsData[currentPartKey].modules = 0;
+                partsData[currentPartKey].slots = [null, null, null];
+                partsData[currentPartKey].locks = [false, false, false];
+                renderDisplay();
+            }
+        }
+
+        function updateSummary() {
+            let grandTotalModules = 0;
+            let statSums = {};
+
+            Object.keys(partsData).forEach(key => {
+                let p = partsData[key];
+                grandTotalModules += p.modules;
+
+                p.slots.forEach(s => {
+                    if (s) {
+                        let val = STAT_NUM_VALUES[s.name][s.level - 1];
+                        if (!statSums[s.name]) {
+                            statSums[s.name] = 0;
+                        }
+                        statSums[s.name] += val;
+                    }
+                });
+            });
+
+            document.getElementById("grandTotalModules").innerText = grandTotalModules;
+
+            let gridEl = document.getElementById("summaryStatsGrid");
+            let keys = Object.keys(statSums);
+
+            if (keys.length === 0) {
+                gridEl.innerHTML = `<span class="no-stats">まだ効果を獲得していません</span>`;
+            } else {
+                let html = "";
+                keys.forEach(statName => {
+                    let sumVal = statSums[statName].toFixed(2);
+                    html += `
+                        <div class="stat-item">
+                            <span>${statName}</span>
+                            <span class="stat-item-val">+${sumVal}%</span>
+                        </div>
+                    `;
+                });
+                gridEl.innerHTML = html;
+            }
+        }
+
+        function renderDisplay() {
+            let data = partsData[currentPartKey];
+            document.getElementById("totalModules").innerText = data.modules;
+            let cost = getLockCost();
+            document.getElementById("currentCostInfo").innerText = `（現在のロック数: ${getLockCount()}個 / 今回の必要カスモ: ${cost}個）`;
+
+            let displayHtml = "";
+            let hasAnySlot = false;
+
+            let tempExisting = [];
+            for (let i = 0; i < 3; i++) {
+                if (data.slots[i] !== null && data.locks[i]) {
+                    tempExisting.push(data.slots[i].name);
+                }
+            }
+
+            for (let i = 0; i < 3; i++) {
+                let s = data.slots[i];
+                let isLocked = data.locks[i];
+
+                if (s) {
+                    hasAnySlot = true;
+                    let lvlClass = "lvl-normal";
+                    if (s.level >= 12 && s.level <= 14) {
+                        lvlClass = "lvl-high";
+                    } else if (s.level === 15) {
+                        lvlClass = "lvl-max";
+                    }
+
+                    let valPercent = STAT_VALUES[s.name][s.level - 1];
+                    let currentProb = calculateCurrentProbability(s.name, tempExisting.filter(n => n !== s.name));
+
+                    displayHtml += `
+                        <div class="slot">
+                            <div class="slot-info">
+                                <div class="slot-main">
+                                    <span>${i + 1}枠目: <strong>${s.name}</strong></span>
+                                    <span class="${lvlClass}">${valPercent} (Lv.${s.level})</span>
+                                </div>
+                                <span class="slot-prob">獲得時抽選確率（変動後）: ${currentProb}</span>
+                            </div>
+                            <label class="lock-label">
+                                <input type="checkbox" id="lock${i}" ${isLocked ? "checked" : ""}> ロック
+                            </label>
+                        </div>
+                    `;
+                } else {
+                    let conditionText = (i === 1) ? "(50%の抽選失敗)" : ((i === 2) ? "(30%の抽選失敗)" : "");
+                    displayHtml += `
+                        <div class="slot">
+                            <div class="slot-info">
+                                <div class="slot-main">
+                                    <span>${i + 1}枠目: <span class="empty-slot">効果なし ${conditionText}</span></span>
+                                </div>
+                            </div>
+                            <label class="lock-label">
+                                <input type="checkbox" id="lock${i}" disabled> ロック
+                            </label>
+                        </div>
+                    `;
+                }
+            }
+
+            document.getElementById("slotsDisplay").innerHTML = displayHtml;
+            document.getElementById("btnResetNum").disabled = !hasAnySlot;
+            document.getElementById("btnUndo").disabled = historyStack.length === 0;
+
+            updateSummary();
+        }
+
+        renderDisplay();
+    </script>
+</body>
+</html>
