@@ -243,7 +243,6 @@
             font-style: italic;
         }
 
-        /* スマホ向け微調整 */
         @media (max-width: 480px) {
             body {
                 padding: 10px;
@@ -423,12 +422,17 @@
             return prob.toFixed(2) + "%";
         }
 
+        function getLevelProbability(lvl) {
+            let obj = LEVEL_WEIGHTS.find(item => item.lvl === lvl);
+            return obj ? obj.w.toFixed(2) + "%" : "0.00%";
+        }
+
         function rollStat(existingNames) {
             let available = Object.keys(OPTION_WEIGHTS).filter(name => !existingNames.includes(name));
             if (available.length === 0) return null;
             let chosenName = getRandomWeighted(available, name => OPTION_WEIGHTS[name]);
             let chosenLvlObj = getRandomWeighted(LEVEL_WEIGHTS, item => item.w);
-            return { name: chosenName, level: chosenLvlObj.lvl };
+            return { name: chosenName, level: chosenLvlObj.lvl, lastAction: 'option' };
         }
 
         function rollGacha() {
@@ -487,6 +491,7 @@
                 if (data.slots[i] !== null && !data.locks[i]) {
                     let chosenLvlObj = getRandomWeighted(LEVEL_WEIGHTS, item => item.w);
                     data.slots[i].level = chosenLvlObj.lvl;
+                    data.slots[i].lastAction = 'number'; // 数値再設定による更新フラグ
                 }
             }
             renderDisplay();
@@ -571,7 +576,17 @@
                     }
 
                     let valPercent = STAT_VALUES[s.name][s.level - 1];
-                    let currentProb = calculateCurrentProbability(s.name, tempExisting.filter(n => n !== s.name));
+                    let probText = "";
+
+                    if (s.lastAction === 'number') {
+                        // 数値再設定時はレベルの確率を表示
+                        let lvlProb = getLevelProbability(s.level);
+                        probText = `数値抽選確率: ${lvlProb} (Lv.${s.level})`;
+                    } else {
+                        // 効果変更時はオプション選択確率を表示
+                        let currentProb = calculateCurrentProbability(s.name, tempExisting.filter(n => n !== s.name));
+                        probText = `獲得時抽選確率（変動後）: ${currentProb}`;
+                    }
 
                     displayHtml += `
                         <div class="slot">
@@ -580,7 +595,7 @@
                                     <span>${i + 1}枠目: <strong>${s.name}</strong></span>
                                     <span class="${lvlClass}">${valPercent} (Lv.${s.level})</span>
                                 </div>
-                                <span class="slot-prob">獲得時抽選確率（変動後）: ${currentProb}</span>
+                                <span class="slot-prob">${probText}</span>
                             </div>
                             <label class="lock-label">
                                 <input type="checkbox" id="lock${i}" ${isLocked ? "checked" : ""}> ロック
